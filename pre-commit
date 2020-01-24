@@ -1,0 +1,33 @@
+#!/bin/sh
+
+STAGED_GO_FILES=$(git diff --cached --name-only | grep ".go$")
+
+if [ "$STAGED_GO_FILES" = "" ]; then
+  exit 0
+fi
+
+PASS=true
+
+for file in $STAGED_GO_FILES; do
+    if ! golint -set_exit_status "$file" 2>&1
+    then
+        PASS=false
+    fi
+done
+
+for entry in "devim-case/tests"/*
+do
+   go test -v "$entry"
+   if [ $? == 1 ]; then
+      PASS=false
+    fi
+done
+
+if ! $PASS; then
+  printf "Commit Failed\n"
+  exit 1
+else
+  printf "Commit Succeeded\n"
+fi
+
+exit 0
